@@ -1,6 +1,7 @@
 package com.sportradar.scoreboard;
 
 import com.sportradar.scoreboard.exception.MatchAlreadyExistsException;
+import com.sportradar.scoreboard.exception.MatchNotFoundException;
 import com.sportradar.scoreboard.exception.TeamAlreadyPlayingException;
 import com.sportradar.scoreboard.model.Match;
 import com.sportradar.scoreboard.model.MatchId;
@@ -44,7 +45,14 @@ public class FootballWorldCupScoreboardImpl implements Scoreboard {
 
     @Override
     public void updateScore(String homeTeam, String awayTeam, int homeScore, int awayScore) {
-        throw new UnsupportedOperationException("Not implemented yet");
+        var id = new MatchId(homeTeam, awayTeam);
+
+        if (matches.get(id) == null) {
+            throw new MatchNotFoundException(id);
+        }
+
+        Match existingMatch = matches.get(id);
+        matches.put(id, existingMatch.withScore(homeScore, awayScore));
     }
 
     @Override
