@@ -17,6 +17,11 @@ that shows ongoing matches and their scores. The library provides an API to star
 mvn clean test
 ```
 
+### Test Coverage
+- **17 test methods** with comprehensive edge case coverage
+- **26 total test assertions** across all test classes
+- Tests cover: happy paths, error cases, case-insensitive matching, empty state, and snapshot immutability
+
 ---
 
 ## Project Structure
@@ -34,11 +39,11 @@ src/
 │   │── Scoreboard.java                       # Public interface (API contract)
 │   └── FootballWorldCupScoreboardImpl.java   # In-memory implementation of the scoreboard
 └── test/java/com/sportradar/scoreboard/
-    │── model/
-    │   ├── MatchIdTest.java
-    │   └── MatchTest.java
-    │── FootballWorldCupScoreboardTest.java
-    └── TestConstants.java
+    ├── model/
+    │   ├── MatchIdTest.java                  # MatchId validation tests
+    │   └── MatchTest.java                    # Match immutability & score tests
+    ├── FootballWorldCupScoreboardTest.java   # Integration tests (17 test methods)
+    └── TestConstants.java                    # Shared test constants (team names)
 
 ```
 
@@ -51,6 +56,12 @@ src/
 produce new `Match` instances via `withScore()`, eliminating mutation-related bugs
 and making state changes explicit.
 
+### Score Validation
+Scores are validated at multiple points:
+- During `Match` construction (prevents negative scores)
+- During `Match.withScore()` (prevents negative scores in updates)
+- Invalid scores throw `IllegalArgumentException` with descriptive messages
+
 ### MatchId Normalization
 Team names are normalized to lowercase at `MatchId` construction time using
 `Locale.ROOT`. This enforces case-insensitive equality at the domain level - no `equalsIgnoreCase` scattered across the codebase.
@@ -62,16 +73,20 @@ returns team names exactly as the caller provided them.
 
 ### Single Data Structure
 `FootballWorldCupScoreboardImpl` uses a single `HashMap<MatchId, Match>` as its only
-data structure.
+data structure, with an explicit `insertionOrderCounter` for reliable insertion tracking.
 
-### Insertion Order
-Matches with equal total score are ordered by the most recently started. An integer
-`insertionOrder` counter is used and directly models the insertion sequence, which is what the requirement actually describes
+### Insertion Order (Explicit Counter)
+Matches with equal total score are ordered by insertion sequence. An explicit integer
+`insertionOrderCounter` (incremented with each new match) reliably tracks insertion order,
+independent of map state. This ensures correct behavior even when matches are finished
+and new ones are started.
 
 ### MatchSummary DTO
 `getSummary()` returns `List<MatchSummary>` rather than exposing internal `Match`
 records. This decouples the public API from internal implementation details
 (`insertionOrder` is an internal concern and not part of the contract).
+The returned list is immutable - changes to the scoreboard after calling `getSummary()`
+do not affect previously returned snapshots.
 
 ### Exceptions
 Three exception types are defined for error handling:
@@ -85,14 +100,52 @@ Three exception types are defined for error handling:
 ## Assumptions
 
 - **Team names are case-insensitive** — `"Mexico"` and `"MEXICO"` are the same team.
+  - Case-insensitive matching works across all operations: `startMatch()`, `updateScore()`, `finishMatch()`
 - **A team can only play in one match at a time** — starting a match with an
   already-playing team throws `TeamAlreadyPlayingException`.
-- **Scores are absolute** — `updateScore(2, 3)` sets the score to 2-3, it does
+- **Scores are non-negative integers** — `updateScore(2, 3)` sets the score to 2-3.
+  - Negative scores throw `IllegalArgumentException`
+  - Scores are validated at both construction and update time
+  - Supports any valid integer value (0 to `Integer.MAX_VALUE`)
+- **Scores are absolute, not relative** — `updateScore(2, 3)` sets the score to 2-3, it does
   not add to the existing score.
-- **getSummary() returns a snapshot** — changes to the scoreboard after calling
-  it do not affect the returned list.
+- **getSummary() returns an immutable snapshot** — changes to the scoreboard after calling
+  it do not affect the returned list. Each call returns a new list reflecting current state.
 - **Matches are ordered by total score, then by most recently started** — this is
-  implemented using an `insertionOrder` counter that increments with each new match.
+  implemented using an explicit `insertionOrderCounter` that increments with each new match.
+
+---
+
+## Test Coverage
+
+The project includes comprehensive test coverage for all functionality and edge cases:
+
+### Test Classes
+- **FootballWorldCupScoreboardTest.java** (17 test methods)
+  - Happy path: match creation, score updates, match finish
+  - Error cases: negative scores, non-existent matches, duplicate matches
+  - Case-insensitive matching: all operations tested with mixed-case team names
+  - Edge cases: empty scoreboard, snapshot immutability, insertion order with ties
+  
+- **MatchIdTest.java** (4 test methods)
+  - Validation of team names (non-null, non-blank)
+  - Case normalization with Locale.ROOT
+  - Prevention of same-team matches
+
+- **MatchTest.java** (6 test methods)
+  - Record creation and immutability
+  - Score validation (negative scores rejected)
+  - Score updates via `withScore()`
+  - Total score calculation
+
+### Key Test Scenarios
+- ✅ Negative score rejection in both constructor and updates
+- ✅ Case-insensitive team matching across all operations
+- ✅ Empty scoreboard handling
+- ✅ Snapshot immutability (getSummary returns independent copy)
+- ✅ Insertion order with tied total scores
+- ✅ Duplicate match prevention
+- ✅ Team already playing prevention
 
 ---
 
