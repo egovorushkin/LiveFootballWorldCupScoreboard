@@ -12,4 +12,18 @@ public record MatchSummary(
         int awayTeamScore,
         int totalScore
 ) {
+    public static MatchSummary from(Match match) {
+        return new MatchSummary(
+                match.homeTeam(),
+                match.homeTeamScore(),
+                match.awayTeam(),
+                match.awayTeamScore(),
+                match.totalScore()
+        );
+    }
+
+    @Override
+    public String toString() {
+        return homeTeam + " " + homeTeamScore + " - " + awayTeam + " " + awayTeamScore;
+    }
 }
