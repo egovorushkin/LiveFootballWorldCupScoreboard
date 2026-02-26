@@ -133,4 +133,55 @@ class FootballWorldCupScoreboardTest {
     }
 
 
+    @Test
+    @DisplayName("Given multiple matches with different scores, when getSummary is called, then matches are ordered by total score descending")
+    void givenMultipleMatches_whenGetSummary_thenReturnMatchesOrderedByTotalScoreDescending() {
+        // Given
+        scoreboard.startMatch(TEAM_ENGLAND, TEAM_SPAIN);
+        scoreboard.startMatch(TEAM_BRAZIL, TEAM_ARGENTINA);
+        scoreboard.updateScore(TEAM_ENGLAND, TEAM_SPAIN, 2, 1);
+        scoreboard.updateScore(TEAM_BRAZIL, TEAM_ARGENTINA, 3, 2);
+
+        // When
+        var summary = scoreboard.getSummary();
+
+        // Then
+        assertEquals(2, summary.size());
+        assertEquals(TEAM_BRAZIL, summary.get(0).homeTeam());
+        assertEquals(TEAM_ARGENTINA, summary.get(0).awayTeam());
+        assertEquals(TEAM_ENGLAND, summary.get(1).homeTeam());
+        assertEquals(TEAM_SPAIN, summary.get(1).awayTeam());
+    }
+
+    @Test
+    @DisplayName("Given multiple matches with same total scores, when getSummary is called, then matches are ordered by recently started match")
+    void givenMultipleMatchesWithSameTotalScores_whenGetSummary_thenReturnMatchesOrderedByRecentlyStartedMatch() {
+        // Given
+        scoreboard.startMatch(TEAM_MEXICO, TEAM_CANADA);
+        scoreboard.startMatch(TEAM_SPAIN, TEAM_BRAZIL);
+        scoreboard.startMatch(TEAM_GERMANY, TEAM_FRANCE);
+        scoreboard.startMatch(TEAM_URUGUAY, TEAM_ITALY);
+        scoreboard.startMatch(TEAM_ARGENTINA, TEAM_AUSTRALIA);
+        scoreboard.updateScore(TEAM_MEXICO, TEAM_CANADA, 0, 5);
+        scoreboard.updateScore(TEAM_SPAIN, TEAM_BRAZIL, 10, 1);
+        scoreboard.updateScore(TEAM_GERMANY, TEAM_FRANCE, 2, 2);
+        scoreboard.updateScore(TEAM_URUGUAY, TEAM_ITALY, 6, 6);
+        scoreboard.updateScore(TEAM_ARGENTINA, TEAM_AUSTRALIA, 3, 1);
+
+        // When
+        var summary = scoreboard.getSummary();
+
+        // Then
+        assertEquals(5, summary.size());
+        assertEquals(TEAM_URUGUAY, summary.get(0).homeTeam());
+        assertEquals(TEAM_ITALY, summary.get(0).awayTeam());
+        assertEquals(TEAM_SPAIN, summary.get(1).homeTeam());
+        assertEquals(TEAM_BRAZIL, summary.get(1).awayTeam());
+        assertEquals(TEAM_MEXICO, summary.get(2).homeTeam());
+        assertEquals(TEAM_CANADA, summary.get(2).awayTeam());
+        assertEquals(TEAM_ARGENTINA, summary.get(3).homeTeam());
+        assertEquals(TEAM_AUSTRALIA, summary.get(3).awayTeam());
+        assertEquals(TEAM_GERMANY, summary.get(4).homeTeam());
+        assertEquals(TEAM_FRANCE, summary.get(4).awayTeam());
+    }
 }

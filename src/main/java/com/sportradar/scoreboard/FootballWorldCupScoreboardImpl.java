@@ -70,7 +70,7 @@ public class FootballWorldCupScoreboardImpl implements Scoreboard {
     public List<MatchSummary> getSummary() {
         return matches.values().stream()
                 .sorted(Comparator
-                        .comparingInt(Match::totalScore).reversed()
+                        .comparingInt(Match::totalScore)
                         .thenComparingInt(Match::insertionOrder).reversed())
                 .map(MatchSummary::from)
                 .toList();
