@@ -18,7 +18,7 @@ public record Match(MatchId id,
         Objects.requireNonNull(homeTeam, "Home team display name must not be null");
         Objects.requireNonNull(awayTeam, "Away team display name must not be null");
         validateScore(homeTeamScore, "Home score");
-        validateScore(homeTeamScore, "Away score");
+        validateScore(awayTeamScore, "Away score");
     }
 
     public int totalScore() {
