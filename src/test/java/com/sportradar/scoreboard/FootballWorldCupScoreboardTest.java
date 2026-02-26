@@ -8,8 +8,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static com.sportradar.scoreboard.TestConstants.*;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 
 class FootballWorldCupScoreboardTest {
 
@@ -112,6 +111,26 @@ class FootballWorldCupScoreboardTest {
         assertThrows(MatchNotFoundException.class, () -> scoreboard.updateScore(TEAM_ENGLAND, TEAM_SPAIN, 1, 0));
     }
 
+    @Test
+    @DisplayName("Given a match exists, when finishMatch is called, then match is removed from scoreboard")
+    void givenMatchExists_whenFinishMatch_thenMatchRemovedFromScoreboard() {
+        // Given
+        scoreboard.startMatch(TEAM_ENGLAND, TEAM_SPAIN);
+
+        // When
+        scoreboard.finishMatch(TEAM_ENGLAND, TEAM_SPAIN);
+
+        // Then
+        var summary = scoreboard.getSummary();
+        assertTrue(summary.isEmpty());
+    }
+
+    @Test
+    @DisplayName("Given a match does not exist, when finishMatch is called, then exception is thrown")
+    void givenMatchDoesNotExist_whenFinishMatch_thenThrowException() {
+        // When & Then
+        assertThrows(MatchNotFoundException.class, () -> scoreboard.finishMatch(TEAM_ENGLAND, TEAM_SPAIN));
+    }
 
 
 }

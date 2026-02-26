@@ -57,7 +57,13 @@ public class FootballWorldCupScoreboardImpl implements Scoreboard {
 
     @Override
     public void finishMatch(String homeTeam, String awayTeam) {
-        throw new UnsupportedOperationException("Not implemented yet");
+        var id = new MatchId(homeTeam, awayTeam);
+
+        if (matches.get(id) == null) {
+            throw new MatchNotFoundException(id);
+        }
+
+        matches.remove(id);
     }
 
     @Override
