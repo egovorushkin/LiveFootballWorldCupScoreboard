@@ -29,6 +29,8 @@ public record Match(MatchId id,
      * Returns a new Match instance with updated scores.
      */
     public Match withScore(int homeScore, int awayScore) {
+        validateScore(homeScore, "Home score");
+        validateScore(awayScore, "Away score");
         return new Match(id, homeTeam, awayTeam, homeScore, awayScore, insertionOrder);
     }
 

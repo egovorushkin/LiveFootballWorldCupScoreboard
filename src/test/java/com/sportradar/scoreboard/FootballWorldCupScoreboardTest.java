@@ -6,6 +6,8 @@ import com.sportradar.scoreboard.exception.TeamAlreadyPlayingException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 
 import static com.sportradar.scoreboard.TestConstants.*;
 import static org.junit.jupiter.api.Assertions.*;
@@ -15,8 +17,7 @@ class FootballWorldCupScoreboardTest {
     private Scoreboard scoreboard;
 
     @BeforeEach
-    void setUp() {
-        // Given
+    void initializeEmptyScoreboard() {
         scoreboard = new FootballWorldCupScoreboardImpl();
     }
 
@@ -28,13 +29,13 @@ class FootballWorldCupScoreboardTest {
 
         // Then
         var summary = scoreboard.getSummary();
-        assertEquals(1, summary.size());
+        assertEquals(1, summary.size(), "Summary should contain one match");
 
         var match = summary.getFirst();
-        assertEquals(TEAM_ENGLAND, match.homeTeam());
-        assertEquals(TEAM_SPAIN, match.awayTeam());
-        assertEquals(0, match.homeTeamScore());
-        assertEquals(0, match.awayTeamScore());
+        assertEquals(TEAM_ENGLAND, match.homeTeam(), "Home team should be England");
+        assertEquals(TEAM_SPAIN, match.awayTeam(), "Away team should be Spain");
+        assertEquals(0, match.homeTeamScore(), "Home team score should start at 0");
+        assertEquals(0, match.awayTeamScore(), "Away team score should start at 0");
     }
 
     @Test
@@ -59,26 +60,31 @@ class FootballWorldCupScoreboardTest {
         assertThrows(MatchAlreadyExistsException.class, () -> scoreboard.startMatch(teamEnglandUpperCase, teamSpainUpperCase));
     }
 
-    @Test
+    @ParameterizedTest
+    @CsvSource({
+            "England, Brazil",
+            "Brazil, England",
+            "Spain, Brazil",
+            "Brazil, Spain"
+    })
     @DisplayName("Given a team is already playing, when startMatch is called with that team, then exception is thrown")
-    void givenTeamAlreadyPlaying_whenStartMatch_thenThrowException() {
-        // When
+    void givenTeamAlreadyPlaying_whenStartMatch_thenThrowException(String homeTeam, String awayTeam) {
+        // Given
         scoreboard.startMatch(TEAM_ENGLAND, TEAM_SPAIN);
 
-        // Then
-        assertThrows(TeamAlreadyPlayingException.class, () -> scoreboard.startMatch(TEAM_ENGLAND, TEAM_BRAZIL));
-        assertThrows(TeamAlreadyPlayingException.class, () -> scoreboard.startMatch(TEAM_BRAZIL, TEAM_ENGLAND));
-        assertThrows(TeamAlreadyPlayingException.class, () -> scoreboard.startMatch(TEAM_SPAIN, TEAM_BRAZIL));
-        assertThrows(TeamAlreadyPlayingException.class, () -> scoreboard.startMatch(TEAM_BRAZIL, TEAM_SPAIN));
+        // When & Then
+        assertThrows(TeamAlreadyPlayingException.class, () ->
+            scoreboard.startMatch(homeTeam, awayTeam),
+            "Team already playing should throw TeamAlreadyPlayingException");
     }
 
     @Test
     @DisplayName("Given a team is already playing, when startMatch is called with that team (case insensitive), then exception is thrown")
     void givenTeamAlreadyPlaying_whenStartMatch_thenThrowExceptionCaseInsensitive() {
-        // When
+        // Given
         scoreboard.startMatch(TEAM_ENGLAND, TEAM_SPAIN);
 
-        // Then
+        // When & Then
         String teamEnglandUpperCase = TEAM_ENGLAND.toUpperCase();
         String teamSpainUpperCase = TEAM_SPAIN.toUpperCase();
         assertThrows(TeamAlreadyPlayingException.class, () -> scoreboard.startMatch(teamEnglandUpperCase, TEAM_BRAZIL));
@@ -107,6 +113,43 @@ class FootballWorldCupScoreboardTest {
         assertEquals(0, match.awayTeamScore());
     }
 
+    @ParameterizedTest
+    @CsvSource({
+            "-1, 0",
+            "0, -1",
+            "-1, -1"
+    })
+    @DisplayName("Given negative scores, when updateScore is called, then exception is thrown")
+    void givenNegativeScores_whenUpdateScore_thenThrowException(int homeScore, int awayScore) {
+        // Given
+        scoreboard.startMatch(TEAM_ENGLAND, TEAM_SPAIN);
+
+        // When & Then
+        assertThrows(IllegalArgumentException.class, () ->
+            scoreboard.updateScore(TEAM_ENGLAND, TEAM_SPAIN, homeScore, awayScore),
+            "Negative scores should throw IllegalArgumentException");
+    }
+
+    @Test
+    @DisplayName("Given a match exists, when updateScore is called with case-insensitive team names, then score is updated")
+    void givenMatchExists_whenUpdateScoreCaseInsensitive_thenScoreUpdated() {
+        // Given
+        scoreboard.startMatch(TEAM_ENGLAND, TEAM_SPAIN);
+
+        // When
+        String teamEnglandUpperCase = TEAM_ENGLAND.toUpperCase();
+        String teamSpainUpperCase = TEAM_SPAIN.toUpperCase();
+        scoreboard.updateScore(teamEnglandUpperCase, teamSpainUpperCase, 2, 1);
+
+        // Then
+        var summary = scoreboard.getSummary();
+        assertEquals(1, summary.size());
+
+        var match = summary.getFirst();
+        assertEquals(2, match.homeTeamScore());
+        assertEquals(1, match.awayTeamScore());
+    }
+
     @Test
     @DisplayName("Given a match does not exist, when updateScore is called, then exception is thrown")
     void givenMatchDoesNotExist_whenUpdateScore_thenThrowException() {
@@ -129,10 +172,36 @@ class FootballWorldCupScoreboardTest {
     }
 
     @Test
+    @DisplayName("Given a match exists, when finishMatch is called with case-insensitive team names, then match is removed from scoreboard")
+    void givenMatchExists_whenFinishMatchCaseInsensitive_thenMatchRemovedFromScoreboard() {
+        // Given
+        scoreboard.startMatch(TEAM_ENGLAND, TEAM_SPAIN);
+
+        // When
+        String teamEnglandUpperCase = TEAM_ENGLAND.toUpperCase();
+        String teamSpainUpperCase = TEAM_SPAIN.toUpperCase();
+        scoreboard.finishMatch(teamEnglandUpperCase, teamSpainUpperCase);
+
+        // Then
+        var summary = scoreboard.getSummary();
+        assertTrue(summary.isEmpty());
+    }
+
+    @Test
     @DisplayName("Given a match does not exist, when finishMatch is called, then exception is thrown")
     void givenMatchDoesNotExist_whenFinishMatch_thenThrowException() {
         // When & Then
         assertThrows(MatchNotFoundException.class, () -> scoreboard.finishMatch(TEAM_ENGLAND, TEAM_SPAIN));
+    }
+
+    @Test
+    @DisplayName("Given empty scoreboard, when getSummary is called, then return empty list")
+    void givenEmptyScoreboard_whenGetSummary_thenReturnEmptyList() {
+        // When
+        var summary = scoreboard.getSummary();
+
+        // Then
+        assertTrue(summary.isEmpty());
     }
 
     @Test
@@ -185,5 +254,29 @@ class FootballWorldCupScoreboardTest {
         assertEquals(TEAM_AUSTRALIA, summary.get(3).awayTeam());
         assertEquals(TEAM_GERMANY, summary.get(4).homeTeam());
         assertEquals(TEAM_FRANCE, summary.get(4).awayTeam());
+    }
+
+    @Test
+    @DisplayName("Given getSummary is called, when scoreboard is updated, then summary remains unchanged (immutable snapshot)")
+    void givenGetSummaryIsCalled_whenScoreboardIsUpdated_thenSummaryUnchanged() {
+        // Given
+        scoreboard.startMatch(TEAM_ENGLAND, TEAM_SPAIN);
+        var summary1 = scoreboard.getSummary();
+
+        // When
+        scoreboard.updateScore(TEAM_ENGLAND, TEAM_SPAIN, 5, 3);
+
+        // Then
+        assertEquals(0, summary1.getFirst().homeTeamScore(),
+            "Snapshot should preserve original state");
+        assertEquals(0, summary1.getFirst().awayTeamScore(),
+            "Snapshot should preserve original state");
+
+        // And
+        var summary2 = scoreboard.getSummary();
+        assertEquals(5, summary2.getFirst().homeTeamScore(),
+            "New summary should reflect updated score");
+        assertEquals(3, summary2.getFirst().awayTeamScore(),
+            "New summary should reflect updated score");
     }
 }

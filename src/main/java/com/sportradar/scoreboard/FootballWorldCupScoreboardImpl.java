@@ -16,6 +16,7 @@ import java.util.stream.Stream;
 public class FootballWorldCupScoreboardImpl implements Scoreboard {
 
     private final Map<MatchId, Match> matches = new HashMap<>();
+    private int insertionOrderCounter = 0;
 
     @Override
     public void startMatch(String homeTeam, String awayTeam) {
@@ -23,7 +24,7 @@ public class FootballWorldCupScoreboardImpl implements Scoreboard {
 
         validateMatch(matchId);
 
-        var match = new Match(matchId, homeTeam, awayTeam, 0, 0, matches.size());
+        var match = new Match(matchId, homeTeam, awayTeam, 0, 0, insertionOrderCounter++);
         matches.put(matchId, match);
     }
 
