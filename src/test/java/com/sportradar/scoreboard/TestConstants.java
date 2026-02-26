@@ -14,7 +14,6 @@ public final class TestConstants {
     public static final String TEAM_ITALY = "Italy";
     public static final String TEAM_AUSTRALIA = "Australia";
 
-
     private TestConstants() {
         // Private constructor to prevent instantiation
     }

@@ -11,6 +11,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 
 public class FootballWorldCupScoreboardImpl implements Scoreboard {
 
@@ -20,50 +21,50 @@ public class FootballWorldCupScoreboardImpl implements Scoreboard {
     public void startMatch(String homeTeam, String awayTeam) {
         var matchId = new MatchId(homeTeam, awayTeam);
 
+        validateMatch(matchId);
+
+        var match = new Match(matchId, homeTeam, awayTeam, 0, 0, matches.size());
+        matches.put(matchId, match);
+    }
+
+    private void validateMatch(MatchId matchId) {
         // validation: match already exists
         if (matches.containsKey(matchId)) {
             throw new MatchAlreadyExistsException(matchId);
         }
 
         // validation: home team or away team is already playing in another match
-        boolean teamAlreadyPlaying = matches.keySet().stream().anyMatch(key ->
-                key.homeTeam().equals(matchId.homeTeam()) ||
-                        key.awayTeam().equals(matchId.homeTeam()) ||
-                        key.homeTeam().equals(matchId.awayTeam()) ||
-                        key.awayTeam().equals(matchId.awayTeam())
-        );
-
-        if (teamAlreadyPlaying) {
-            throw new TeamAlreadyPlayingException("One of the teams is already playing in another match");
-        }
-
-        var match = new Match(matchId, homeTeam, awayTeam, 0, 0, matches.size());
-        matches.put(matchId, match);
-
-
+        matches.keySet().stream()
+                .flatMap(key -> Stream.of(key.homeTeam(), key.awayTeam()))
+                .filter(team -> team.equals(matchId.homeTeam()) || team.equals(matchId.awayTeam()))
+                .findFirst()
+                .ifPresent(team -> {
+                    throw new TeamAlreadyPlayingException(team);
+                });
     }
 
     @Override
     public void updateScore(String homeTeam, String awayTeam, int homeScore, int awayScore) {
-        var id = new MatchId(homeTeam, awayTeam);
+        var id = getMatchId(homeTeam, awayTeam);
 
-        if (matches.get(id) == null) {
-            throw new MatchNotFoundException(id);
-        }
-
-        Match existingMatch = matches.get(id);
-        matches.put(id, existingMatch.withScore(homeScore, awayScore));
+        matches.computeIfPresent(id, (_, existingMatch) -> existingMatch.withScore(homeScore, awayScore));
     }
 
     @Override
     public void finishMatch(String homeTeam, String awayTeam) {
+        var id = getMatchId(homeTeam, awayTeam);
+
+        matches.remove(id);
+    }
+
+    private MatchId getMatchId(String homeTeam, String awayTeam) {
         var id = new MatchId(homeTeam, awayTeam);
 
         if (matches.get(id) == null) {
             throw new MatchNotFoundException(id);
         }
 
-        matches.remove(id);
+        return id;
     }
 
     @Override

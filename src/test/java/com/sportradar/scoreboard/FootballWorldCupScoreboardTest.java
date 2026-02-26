@@ -54,7 +54,9 @@ class FootballWorldCupScoreboardTest {
         scoreboard.startMatch(TEAM_ENGLAND, TEAM_SPAIN);
 
         // Then
-        assertThrows(MatchAlreadyExistsException.class, () -> scoreboard.startMatch(TEAM_ENGLAND.toUpperCase(), TEAM_SPAIN.toUpperCase()));
+        String teamEnglandUpperCase = TEAM_ENGLAND.toUpperCase();
+        String teamSpainUpperCase = TEAM_SPAIN.toUpperCase();
+        assertThrows(MatchAlreadyExistsException.class, () -> scoreboard.startMatch(teamEnglandUpperCase, teamSpainUpperCase));
     }
 
     @Test
@@ -77,10 +79,12 @@ class FootballWorldCupScoreboardTest {
         scoreboard.startMatch(TEAM_ENGLAND, TEAM_SPAIN);
 
         // Then
-        assertThrows(TeamAlreadyPlayingException.class, () -> scoreboard.startMatch(TEAM_ENGLAND.toUpperCase(), TEAM_BRAZIL));
-        assertThrows(TeamAlreadyPlayingException.class, () -> scoreboard.startMatch(TEAM_BRAZIL, TEAM_ENGLAND.toUpperCase()));
-        assertThrows(TeamAlreadyPlayingException.class, () -> scoreboard.startMatch(TEAM_SPAIN.toUpperCase(), TEAM_BRAZIL));
-        assertThrows(TeamAlreadyPlayingException.class, () -> scoreboard.startMatch(TEAM_BRAZIL, TEAM_SPAIN.toUpperCase()));
+        String teamEnglandUpperCase = TEAM_ENGLAND.toUpperCase();
+        String teamSpainUpperCase = TEAM_SPAIN.toUpperCase();
+        assertThrows(TeamAlreadyPlayingException.class, () -> scoreboard.startMatch(teamEnglandUpperCase, TEAM_BRAZIL));
+        assertThrows(TeamAlreadyPlayingException.class, () -> scoreboard.startMatch(TEAM_BRAZIL, teamEnglandUpperCase));
+        assertThrows(TeamAlreadyPlayingException.class, () -> scoreboard.startMatch(teamSpainUpperCase, TEAM_BRAZIL));
+        assertThrows(TeamAlreadyPlayingException.class, () -> scoreboard.startMatch(TEAM_BRAZIL, teamSpainUpperCase));
     }
 
     @Test
@@ -102,7 +106,6 @@ class FootballWorldCupScoreboardTest {
         assertEquals(1, match.homeTeamScore());
         assertEquals(0, match.awayTeamScore());
     }
-
 
     @Test
     @DisplayName("Given a match does not exist, when updateScore is called, then exception is thrown")
@@ -131,7 +134,6 @@ class FootballWorldCupScoreboardTest {
         // When & Then
         assertThrows(MatchNotFoundException.class, () -> scoreboard.finishMatch(TEAM_ENGLAND, TEAM_SPAIN));
     }
-
 
     @Test
     @DisplayName("Given multiple matches with different scores, when getSummary is called, then matches are ordered by total score descending")

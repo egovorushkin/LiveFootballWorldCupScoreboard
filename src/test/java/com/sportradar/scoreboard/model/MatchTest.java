@@ -5,13 +5,14 @@ import org.junit.jupiter.api.Test;
 
 import static com.sportradar.scoreboard.TestConstants.TEAM_ENGLAND;
 import static com.sportradar.scoreboard.TestConstants.TEAM_SPAIN;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class MatchTest {
 
     @Test
     @DisplayName("Given valid match details, when creating a match, then create successfully")
-    void givenValidMatchDetailsWhenCreatingMatchThenCreateSuccessfully() {
+    void givenValidMatchDetails_whenCreatingMatch_thenCreateSuccessfully() {
         var matchId = new MatchId(TEAM_ENGLAND, TEAM_SPAIN);
         var match = new Match(matchId, TEAM_ENGLAND, TEAM_SPAIN, 0, 0, 1);
 
@@ -24,7 +25,7 @@ class MatchTest {
 
     @Test
     @DisplayName("Given negative home score, when creating a match, then throw exception")
-    void givenNegativeHomeScoreWhenCreatingMatchThenThrowException() {
+    void givenNegativeHomeScore_whenCreatingMatch_thenThrowException() {
         var matchId = new MatchId(TEAM_ENGLAND, TEAM_SPAIN);
 
         assertThrows(IllegalArgumentException.class, () ->
@@ -33,7 +34,7 @@ class MatchTest {
 
     @Test
     @DisplayName("Given negative away score, when creating a match, then throw exception")
-    void givenNegativeAwayScoreWhenCreatingMatchThenThrowException() {
+    void givenNegativeAwayScore_whenCreatingMatch_thenThrowException() {
         var matchId = new MatchId(TEAM_ENGLAND, TEAM_SPAIN);
 
         assertThrows(IllegalArgumentException.class, () ->
@@ -51,7 +52,7 @@ class MatchTest {
 
     @Test
     @DisplayName("Given a match, when withScore is called, then return new match with updated scores")
-    void givenMatchWhenWithScoreThenReturnNewMatchWithUpdatedScores() {
+    void givenMatch_whenWithScoreThenReturnNewMatchWithUpdatedScores() {
         var matchId = new MatchId(TEAM_ENGLAND, TEAM_SPAIN);
         var match = new Match(matchId, TEAM_ENGLAND, TEAM_SPAIN, 0, 0, 1);
 
@@ -76,6 +77,5 @@ class MatchTest {
 
         assertEquals(3, match.totalScore());
     }
-
 
 }
